@@ -30,7 +30,7 @@ export function AIInsightsCard({ simulationId }: AIInsightCardProps) {
             count={10.5}
             baseColor="var(--color-skeleton-base)"
             highlightColor="var(--color-skeleton-highlight)"
-            className="mb-3 flex rounded-lg"
+            className="mb-3 flex h-5 rounded-lg"
             containerClassName="flex-1"
             inline
             enableAnimation
