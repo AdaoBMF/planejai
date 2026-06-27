@@ -19,5 +19,6 @@ export default defineConfig({
         rewrite: (path) => path.replace(/^\/api/, '/v1beta'),
       },
     },
+    allowedHosts: ['enough-joey-curiously.ngrok-free.app'],
   },
 })

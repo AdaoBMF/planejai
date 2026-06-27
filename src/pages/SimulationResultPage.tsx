@@ -36,7 +36,7 @@ export function SimulationResultPage() {
           icon={Goal}
           label="Custo da Meta"
           value={`${data.goalAmount}`}
-          subtitle={'Prazo para atingir a meta'}
+          subtitle={data.goalName}
         />
         <Card
           icon={CalendarClock}
@@ -49,7 +49,7 @@ export function SimulationResultPage() {
           icon={PiggyBank}
           label="Economia mensal"
           value={`R$ ${formatCurrency(monthSavingsStr)}`}
-          subtitle={'Prazo para atingir a meta'}
+          subtitle={'Valor mensal necessário'}
         />
       </div>
       <div className="grid gap-6 lg:grid-cols-3">
@@ -65,7 +65,7 @@ export function SimulationResultPage() {
             icon={CreditCard}
             label="Custos Fixos de Vida"
             value={data.expenses}
-            subtitle={'Prazo para atingir a meta'}
+            subtitle={'Gastos essenciais por mês'}
           />
           <Card
             icon={Landmark}

@@ -1,15 +1,19 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 
 import { buildPrompt } from '@/data/aiPrompt'
+import type { ChatHistoryRecord } from '@/data/chatHistory'
 import type { SimulationRecord } from '@/data/simulation'
 import { getInsight, type InsightData } from '@/services/ai.service'
+import { createChatContext } from '@/utils/chat'
 
+import { useChatStorage } from './useChatStorage'
 import { useSimulationStorage } from './useSimulationStorage'
 
 export const useInsight = (id: string) => {
   const isRequestPending = useRef(false)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const { createChatHistory } = useChatStorage()
   const { getFormData, updateSimulation } = useSimulationStorage()
   const [insight, setInsight] = useState<InsightData | null>(() => {
     const simulation = getFormData(id)
@@ -47,6 +51,13 @@ export const useInsight = (id: string) => {
           insight: data,
           createdAt,
         } as SimulationRecord)
+
+        const chatContext: ChatHistoryRecord = createChatContext(
+          simulationId,
+          prompt,
+          data
+        )
+        createChatHistory(chatContext)
       } catch (e) {
         console.log(e)
         setError('Erro ao gerar o diagnóstico. Tente novamente')
@@ -55,7 +66,7 @@ export const useInsight = (id: string) => {
         setIsLoading(false)
       }
     },
-    [getFormData, updateSimulation]
+    [getFormData, updateSimulation, createChatHistory]
   )
 
   useEffect(() => {
