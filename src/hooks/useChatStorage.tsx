@@ -48,5 +48,25 @@ export const useChatStorage = () => {
     return historyRecord
   }
 
-  return { createChatHistory, getChatHistory, updateChatHistory }
+  const removeQuestion = (id: string) => {
+    const storage = getStorage()
+    const historyRecord = storage.find((h) => h.id === id)
+
+    historyRecord.chat = historyRecord.chat.slice(0, -1)
+
+    const updatedStorage = [
+      ...storage.filter((h) => h.id !== id),
+      historyRecord,
+    ]
+    saveStorage(updatedStorage)
+
+    return historyRecord
+  }
+
+  return {
+    createChatHistory,
+    getChatHistory,
+    updateChatHistory,
+    removeQuestion,
+  }
 }

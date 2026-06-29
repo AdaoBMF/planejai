@@ -1,12 +1,14 @@
 import 'react-loading-skeleton/dist/skeleton.css'
 
 import { MessageCircle, Send } from 'lucide-react'
-import { type SyntheticEvent, useRef, useState } from 'react'
+import { type SyntheticEvent, useEffect, useRef, useState } from 'react'
 import Skeleton from 'react-loading-skeleton'
 
 import { Button } from '@/components/shared/Button'
 import { Divider } from '@/components/shared/Divider'
 import { Input } from '@/components/shared/Input'
+import { Modal } from '@/components/shared/Modal'
+import { ChatError } from '@/context/theme/ChatError'
 import type { ChatHistoryRecord, ChatItem } from '@/data/chatHistory'
 import { useChatStorage } from '@/hooks/useChatStorage'
 import { useInsight } from '@/hooks/useInsight'
@@ -68,12 +70,14 @@ function LoadingChat() {
 }
 
 export function AIInsightsCard({ simulationId }: AIInsightCardProps) {
-  const { getChatHistory, updateChatHistory } = useChatStorage()
+  const { getChatHistory, updateChatHistory, removeQuestion } = useChatStorage()
   const inputRef = useRef<HTMLInputElement>(null)
+  const bottomRef = useRef<HTMLDivElement>(null)
   const { insight, isLoading, error, fetchInsight } = useInsight(simulationId)
   const [isLoadingChat, setIsLoadingChat] = useState(false)
   const [isWaitingModel, setIsWaitingModel] = useState(false)
   const [inputValue, setInputValue] = useState('')
+  const [chatError, setChatError] = useState(false)
   const [chatHistory, setChatHistory] = useState<ChatHistoryRecord>(
     (): ChatHistoryRecord => {
       const chatHistory = getChatHistory(simulationId)
@@ -83,6 +87,9 @@ export function AIInsightsCard({ simulationId }: AIInsightCardProps) {
       return chatHistory
     }
   )
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [chatHistory])
   const handleSubmit = async (e: SyntheticEvent<HTMLFormElement>) => {
     if (!inputValue || isWaitingModel) return
 
@@ -116,9 +123,39 @@ export function AIInsightsCard({ simulationId }: AIInsightCardProps) {
       setChatHistory(chatHistoryWithAnswer)
     } catch (e) {
       console.log(e)
+      setChatError(true)
     }
+
     setIsLoadingChat(false)
     setIsWaitingModel(false)
+  }
+
+  const onCloseModal = async (retry: boolean) => {
+    setChatError(false)
+
+    if (retry) {
+      setIsLoadingChat(true)
+      setIsWaitingModel(true)
+      const chat = [...chatHistory.inicialPrompt, ...chatHistory.chat]
+      try {
+        const agentResponse = await sendChat(chat)
+        const chatHistoryWithAnswer = updateChatHistory(
+          simulationId,
+          agentResponse
+        )
+        setChatHistory(chatHistoryWithAnswer)
+      } catch (e) {
+        console.log(e)
+        setChatError(true)
+      }
+
+      setIsLoadingChat(false)
+      setIsWaitingModel(false)
+      return
+    }
+
+    const updatedChat = removeQuestion(simulationId)
+    setChatHistory(updatedChat)
   }
 
   return (
@@ -152,7 +189,7 @@ export function AIInsightsCard({ simulationId }: AIInsightCardProps) {
       )}
       {!isLoading && !error && insight && <Content insight={insight} />}
       <Divider orientation="horizontal" spacing={10} />
-      <div className="lg:max-h-93 lg:scrollbar-thin lg:[scrollbar-color:var(--border)_transparent] lg:overflow-y-auto lg:pr-2">
+      <div className="scroll-smooth lg:max-h-93 lg:scrollbar-thin lg:[scrollbar-color:var(--border)_transparent] lg:overflow-y-auto lg:pr-2">
         {chatHistory?.chat?.length
           ? chatHistory.chat.map((i, idx) => (
               <ChatItem role={i.role} text={i.parts[0].text} key={idx} />
@@ -179,7 +216,13 @@ export function AIInsightsCard({ simulationId }: AIInsightCardProps) {
             disabled={!inputValue || isLoadingChat}
           />
         </form>
+        <div ref={bottomRef} />
       </div>
+      <Modal
+        isOpen={chatError}
+        children={<ChatError onClose={(retry) => onCloseModal(retry)} />}
+        onClose={(retry) => onCloseModal(retry)}
+      />
     </div>
   )
 }
