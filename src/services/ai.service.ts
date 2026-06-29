@@ -49,13 +49,17 @@ const fetchWithRetry = async (body: string, attempt = 0, delay = 2000) => {
       headers: { 'Content-Type': 'application/json' },
       body,
     })
+    if (res.status === 503) {
+      console.warn(`Gemini 503 detectado`)
+      if (attempt < 3) {
+        await new Promise((resolve) => setTimeout(resolve, delay))
+        return fetchWithRetry(body, attempt + 1, delay * 2)
+      }
+      throw new Error('Agent is unavailable')
+    }
     return res
   } catch (e) {
-    if ((e.status === 503 || e.message.includes('503')) && attempt < 3) {
-      console.warn(`Gemini 503 detectado`)
-      await new Promise((resolve) => setTimeout(resolve, delay))
-      return fetchWithRetry(body, attempt + 1, delay * 2)
-    }
+    console.log(e)
     throw e
   }
 }
