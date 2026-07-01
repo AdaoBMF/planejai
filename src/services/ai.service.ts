@@ -3,7 +3,7 @@ import type { ChatItem } from '@/data/chatHistory'
 const GEMINI_API_KEY = String(import.meta.env.VITE_AI_APP_KEY)
 const GEMINI_API_URL = String(import.meta.env.VITE_AI_APP_URL)
 const GEMINI_API_MODEL = String(import.meta.env.VITE_AI_APP_MODEL)
-const MAX_RETRIES = Number(import.meta.env.MAX_MODEL_API_RETRIES)
+const MAX_RETRIES = Number(import.meta.env.MAX_MODEL_API_RETRIES) || 3
 
 interface GeminiResponse {
   candidates: {
@@ -39,8 +39,7 @@ const sanitizeJsonResponse = (json: string) => {
   return json.replace('```json', '').replace('```', '')
 }
 
-const url = `/api/models/${GEMINI_API_MODEL}:generateContent?key=${GEMINI_API_KEY}`
-const isTwoPointFiveModel = GEMINI_API_MODEL === 'gemini-2.5-flash'
+const url = `${GEMINI_API_URL}/${GEMINI_API_MODEL}:generateContent?key=${GEMINI_API_KEY}`
 
 const fetchWithRetry = async (body: string, attempt = 0, delay = 2000) => {
   try {
@@ -51,7 +50,7 @@ const fetchWithRetry = async (body: string, attempt = 0, delay = 2000) => {
     })
     if (res.status === 503) {
       console.warn(`Gemini 503 detectado`)
-      if (attempt < 3) {
+      if (attempt < MAX_RETRIES) {
         await new Promise((resolve) => setTimeout(resolve, delay))
         return fetchWithRetry(body, attempt + 1, delay * 2)
       }
@@ -69,7 +68,7 @@ const callGeminiApi = async (prompt: string) => {
     contents: [{ parts: [{ text: prompt }] }],
   })
 
-  const response = fetchWithRetry(body)
+  const response = await fetchWithRetry(body)
 
   if (!response.ok) {
     throw new Error(`Call Gemini gone wrong! Error: ${response.status}`)
@@ -80,9 +79,6 @@ const callGeminiApi = async (prompt: string) => {
 
 export const getInsight = async (prompt: string) => {
   const response = await callGeminiApi(prompt)
-
-  console.log('Gemini response ==================')
-  console.log(response)
 
   const json = sanitizeJsonResponse(
     response.candidates[0].content.parts[0].text

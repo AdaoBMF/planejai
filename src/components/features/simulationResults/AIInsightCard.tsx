@@ -73,6 +73,7 @@ export function AIInsightsCard({ simulationId }: AIInsightCardProps) {
   const { getChatHistory, updateChatHistory, removeQuestion } = useChatStorage()
   const inputRef = useRef<HTMLInputElement>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
+  const didRunRef = useRef(false)
   const { insight, isLoading, error, fetchInsight } = useInsight(simulationId)
   const [isLoadingChat, setIsLoadingChat] = useState(false)
   const [isWaitingModel, setIsWaitingModel] = useState(false)
@@ -98,6 +99,14 @@ export function AIInsightsCard({ simulationId }: AIInsightCardProps) {
     inputRef.current?.focus()
   }
 
+  useEffect(() => {
+    if (!insight || didRunRef.current) return
+
+    didRunRef.current = true
+    const history = getChatHistory(simulationId)
+    setChatHistory(history)
+  }, [insight, getChatHistory, simulationId])
+
   const onSendChat = async (simulationId: string, prompt: string) => {
     if (!chatHistory.inicialPrompt.length) return
     setInputValue('')
@@ -121,8 +130,7 @@ export function AIInsightsCard({ simulationId }: AIInsightCardProps) {
         agentResponse
       )
       setChatHistory(chatHistoryWithAnswer)
-    } catch (e) {
-      console.log(e)
+    } catch {
       setChatError(true)
     }
 
@@ -144,8 +152,7 @@ export function AIInsightsCard({ simulationId }: AIInsightCardProps) {
           agentResponse
         )
         setChatHistory(chatHistoryWithAnswer)
-      } catch (e) {
-        console.log(e)
+      } catch {
         setChatError(true)
       }
 

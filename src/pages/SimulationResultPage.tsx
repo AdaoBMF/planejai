@@ -49,7 +49,7 @@ export function SimulationResultPage() {
           icon={PiggyBank}
           label="Economia mensal"
           value={`R$ ${formatCurrency(monthSavingsStr)}`}
-          subtitle={'Valor mensal necessário'}
+          subtitle={'Valor mensal disponível'}
         />
       </div>
       <div className="grid gap-6 lg:grid-cols-3">

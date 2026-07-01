@@ -58,8 +58,7 @@ export const useInsight = (id: string) => {
           data
         )
         createChatHistory(chatContext)
-      } catch (e) {
-        console.log(e)
+      } catch {
         setError('Erro ao gerar o diagnóstico. Tente novamente')
       } finally {
         isRequestPending.current = false

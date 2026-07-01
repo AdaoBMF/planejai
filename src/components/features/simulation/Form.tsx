@@ -18,7 +18,6 @@ export function SimulationForm() {
   const handleNextStep = (value: string) => {
     const updatedFormData = { ...formData, [formStep.id]: value }
     setFormData(updatedFormData)
-    console.log({ updatedFormData })
 
     if (currentStepIdx + 1 > totalSteps - 1) {
       const id = saveFormData(updatedFormData)
